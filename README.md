@@ -216,10 +216,10 @@ El robot completó la ruta en **25.12 segundos**, recorriendo una distancia tota
 
 La trayectoria ejecutada (Figura 1) sigue de cerca la ruta generada por A*, con pequeñas oscilaciones producto de la corrección angular continua. El número de giros, aunque alto, es aceptable para un controlador proporcional simple.
 
-![Trayectoria - Escenario Simple](./graficos/trayectoria_escenario1.png)
+![Trayectoria - Escenario Simple](./otros/trayectoria_escenario1.png)
 *Figura 1: Trayectoria real del robot en el escenario simple.*
 
-![Acciones - Escenario Simple](./graficos/acciones_escenario1.png)
+![Acciones - Escenario Simple](./otros/acciones_escenario1.png)
 *Figura 2: Distribución de acciones en el tiempo (escenario simple).*
 
 ### Escenario complejo (2x2 m)
