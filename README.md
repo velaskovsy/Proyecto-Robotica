@@ -227,10 +227,10 @@ El robot completó la ruta en **55.07 segundos**, recorriendo **3.17 metros**. R
 
 La trayectoria ejecutada (Figura 3) muestra un recorrido más irregular, con múltiples cambios de dirección, lo cual es consistente con un entorno más desafiante. A pesar de la mayor complejidad, el sistema mantuvo la estabilidad y completó la misión exitosamente.
 
-![Trayectoria - Escenario Complejo](./graficos/trayectoria_escenario2.png)
+![Trayectoria - Escenario Complejo](./otros/trayectoria_escenario2.png)
 *Figura 3: Trayectoria real del robot en el escenario complejo.*
 
-![Acciones - Escenario Complejo](./graficos/acciones_escenario2.png)
+![Acciones - Escenario Complejo](./otros/acciones_escenario2.png)
 *Figura 4: Distribución de acciones en el tiempo (escenario complejo).*
 
 ### Resumen de métricas
