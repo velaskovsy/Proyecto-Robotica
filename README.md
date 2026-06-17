@@ -206,8 +206,11 @@ INICIO
    b. Finalizar programa
 
 ## Relación con los Laboratorios 1 y 2
-- **Laboratorio 1:** Se utiliza el modelo cinemático diferencial para convertir comandos de velocidad lineal y angular en velocidades de rueda.
-- **Laboratorio 2:** Se emplean sensores de distancia y encoders, el filtro EMA para suavizar mediciones, y el filtro de Kalman para estimar la distancia frontal. La navegación reactiva del Laboratorio 2 se integra como capa de seguridad durante el seguimiento de la ruta planificada.
+El proyecto integra exitosamente los conceptos de los Laboratorios 1 y 2:
+- **Lab 1:** Cinemática diferencial y odometría.
+- **Lab 2:** Sensores de distancia, filtro EMA, filtro de Kalman, navegación reactiva.
+- **Proyecto final:** Planificación global con A* y seguimiento de trayectorias.
+
 
 ## Resultados y métricas de desempeño
 
@@ -283,25 +286,14 @@ El filtro de Kalman mejoró la estabilidad de la estimación de distancia fronta
 - Sustituir el control proporcional por un controlador predictivo (MPC) o un PID afinado para reducir la cantidad de giros innecesarios y suavizar la trayectoria.
 - Extender el mapa estático a un sistema de mapeo dinámico que permita navegar en entornos desconocidos o cambiantes.
 
-### 7. Relación con los laboratorios
-El proyecto integra exitosamente los conceptos de los Laboratorios 1 y 2:
-- **Lab 1:** Cinemática diferencial y odometría.
-- **Lab 2:** Sensores de distancia, filtro EMA, filtro de Kalman, navegación reactiva.
-- **Proyecto final:** Planificación global con A* y seguimiento de trayectorias.
-
 En conjunto, el sistema demuestra ser una base sólida para navegación autónoma en entornos estructurados, con un desempeño cuantificable y áreas de mejora claramente identificadas.
 
 ## Instrucciones de ejecución
-1. Clonar el repositorio desde GitHub.
-2. Abrir Webots (versión R2025a o superior).
-3. Abrir el mundo correspondiente: `mundos/mundo_proyecto_simple.wbt` o `mundos/mundo_proyecto_complejo.wbt`.
-4. El controlador `controlador_proyecto.py` se cargará automáticamente.
-5. Ejecutar la simulación presionando `Run` (Ctrl+T).
-6. Al finalizar, revisar los archivos CSV generados en la carpeta `CSV con info de cada mundo/` para analizar las trayectorias y métricas.
-
-
-## Limitaciones y trabajos futuros
-- **Error de odometría:** la acumulación de error en los encoders provoca desviaciones en trayectorias largas. Se propone usar un filtro de partículas o SLAM para corregir la posición.
-- **Mapa estático:** el mapa se construye manualmente. En el futuro, se podría implementar un sistema de mapeo autónomo (Línea B).
-- **Control proporcional:** el seguimiento de waypoints podría mejorarse con un controlador PID o un modelo predictivo.
-- **Sensores limitados:** el e-puck tiene sensores infrarrojos con alcance limitado; un LiDAR mejoraría la percepción del entorno.
+1. Instalar Webots (versión R2025a o superior).
+2. Clonar o descargar el repositorio desde GitHub.
+3. Abrir el archivo del mundo ubicado en la carpeta `mundos`:
+   - `mundo_proyecto_simple.wbt` (escenario simple)
+   - `mundo_proyecto_complejo.wbt` (escenario complejo)
+4. El controlador `controlador_proyecto.py` se cargará automáticamente desde la carpeta `controllers/controlador_proyecto/`.
+5. Ejecutar la simulación utilizando el botón **Run** de Webots (o presionando `Ctrl+T`).
+6. Al finalizar la simulación, revisar el archivo CSV generado en la carpeta del controlador (`controllers/controlador_proyecto/datos_trayectoria_escenario*.csv`) para analizar las trayectorias y métricas registradas.
