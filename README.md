@@ -59,177 +59,151 @@ Durante el seguimiento, los sensores frontales y laterales permiten al robot:
 
 Esta capa de seguridad se activa cuando la distancia estimada por el filtro de Kalman (del Laboratorio 2) es menor que el umbral.
 
-### Diagrama de flujo o pseudocódigo de la solución.
+## Pseudocódigo de la solución
 INICIO
 
 1. CONFIGURACIÓN INICIAL
-   a. Seleccionar escenario (1 = simple, 2 = complejo)
+   a. Seleccionar escenario (1 o 2) → define mapa, tamaño de celda, offset, inicio y meta
    b. Definir constantes físicas:
       - RADIO_RUEDA = 0.0205 m
       - L = 0.052 m (distancia entre ruedas)
       - MAX_VELOCIDAD = 6.28 rad/s
-   c. Definir parámetros del filtro de Kalman:
-      - Q_PROCESO = 0.01
-      - R_MEDICION = 0.4
-      - ALPHA_EMA = 0.3 (filtro exponencial)
+   c. Definir parámetros de filtros:
+      - Q_PROCESO = 0.01 (ruido de proceso para Kalman)
+      - R_MEDICION = 0.4 (ruido de medición para Kalman)
+      - ALPHA_EMA = 0.3 (factor de suavizado EMA)
    d. Inicializar variables globales de Kalman:
       - kalman_distancia = 1.0
       - kalman_incertidumbre = 1.0
       - kalman_prediccion = 1.0
 
 2. DEFINIR MAPAS DE OCUPACIÓN (grillas)
-   a. Si escenario == 1:
-        - MAPA = matriz 4x4 (MAPA_E1)
-        - TAMAÑO_CELDA = 0.25 m
-        - OFFSET = 0.375 (desfase para alinear con centro de Webots)
-        - INICIO = (0, 0)  # fila, columna
-        - META = (3, 3)
-   b. Si escenario == 2:
-        - MAPA = matriz 8x8 (MAPA_E2)
-        - TAMAÑO_CELDA = 0.25 m
-        - OFFSET = 0.875
-        - INICIO = (0, 0)
-        - META = (7, 7)
+   a. Escenario 1: mapa 4x4 (MAPA_E1) con obstáculos (1) y espacios libres (0)
+   b. Escenario 2: mapa 8x8 (MAPA_E2) con obstáculos (1) y espacios libres (0)
 
-3. PLANIFICAR RUTA CON A*
+3. PLANIFICACIÓN DE RUTA CON A*
    a. Función heurística: distancia Manhattan entre dos celdas
    b. Algoritmo A*:
-        - Inicializar cola de prioridad con (0, inicio)
-        - Inicializar diccionario costo_g = {inicio: 0}
-        - Inicializar diccionario came_from = {inicio: None}
-        - Mientras cola no vacía:
-             - Extraer nodo actual con menor costo
-             - Si actual == meta:
-                  - Reconstruir camino (desde meta hasta inicio)
-                  - Convertir cada celda (fila, col) a coordenadas del mundo:
-                        x = (col * TAMAÑO_CELDA) - OFFSET
-                        y = OFFSET - (fila * TAMAÑO_CELDA)
-                  - Retornar ruta como lista de (x, y)
-             - Para cada vecino (arriba, abajo, izquierda, derecha):
-                  - Si está dentro de la grilla y no es obstáculo:
-                       - Calcular nuevo costo
-                       - Si es mejor, actualizar y encolar
-   c. Si no se encuentra ruta, mostrar error y retornar []
+      - Inicializar cola de prioridad con (0, INICIO)
+      - Diccionario costo_g = {INICIO: 0}
+      - Diccionario came_from = {INICIO: None}
+      - Definir 4 direcciones de movimiento (arriba, abajo, izquierda, derecha)
+      - Mientras cola no vacía:
+            Extraer nodo con menor f = g + h
+            Si nodo == META:
+                Reconstruir camino desde META hasta INICIO usando came_from
+                Convertir coordenadas de grilla a coordenadas reales (x, y) aplicando:
+                    x_real = (columna * TAMANIO_CELDA) - OFFSET
+                    y_real = OFFSET - (fila * TAMANIO_CELDA)
+                Retornar lista de waypoints (coordenadas reales)
+            Para cada vecino (4 direcciones):
+                Si vecino dentro de límites y no es obstáculo:
+                    Calcular nuevo costo_g = costo_g[actual] + 1
+                    Si vecino no en costo_g o nuevo costo < costo_g[vecino]:
+                        Actualizar costo_g[vecino] = nuevo costo
+                        came_from[vecino] = actual
+                        Agregar a cola con prioridad (nuevo costo + heurística(vecino, META))
+   c. Si no se encuentra ruta: imprimir error y retornar lista vacía
 
-4. INICIALIZAR ROBOT Y SENSORES EN WEBOTS
-   a. Obtener instancia de robot y TIME_STEP (32 ms)
-   b. Configurar motores: posición infinita, velocidad 0
-   c. Habilitar encoders de rueda (left/right wheel sensor)
-   d. Habilitar sensores IR: ps0, ps1, ps2, ps5, ps6, ps7
+4. INICIALIZACIÓN DE WEBOTS
+   a. Crear instancia de Robot
+   b. Obtener TIME_STEP = robot.getBasicTimeStep()
+   c. Configurar motores izquierdo y derecho (posición infinita, velocidad 0)
+   d. Habilitar encoders de rueda (left wheel sensor, right wheel sensor)
+   e. Habilitar sensores de distancia: ps0, ps1, ps2, ps5, ps6, ps7
+   f. Calcular pose inicial del robot a partir de INICIO (grilla) usando fórmula de conversión
+   g. Establecer orientación inicial phi_global = 0 (mirando al este)
+   h. Obtener ruta planificada llamando a planificar_a_star(INICIO, META, MAPA)
+   i. Inicializar índice de waypoint idx_wp = 0
+   j. Abrir archivo CSV para registro de datos (trayectoria)
+   k. Inicializar variables auxiliares: paso=0, contador_evasion=0, ema_anterior=1.0
+   l. Leer encoders una vez para estabilizar (robot.step)
 
-5. CONFIGURAR POSE INICIAL Y RUTA
-   a. Calcular posición inicial en coordenadas del mundo:
-        x_global = (INICIO.col * TAMAÑO_CELDA) - OFFSET
-        y_global = OFFSET - (INICIO.fila * TAMAÑO_CELDA)
-   b. Orientación inicial: phi_global = 0 (este)
-   c. Ejecutar planificación A* → obtener lista de waypoints (ruta)
-   d. Índice de waypoint actual: idx_wp = 0
-   e. Crear archivo CSV para registrar datos de trayectoria
+5. BUCLE PRINCIPAL DE NAVEGACIÓN (Mientras robot.step() != -1)
+   a. Calcular tiempo simulado t = paso * (TIME_STEP / 1000.0)
 
-6. PREPARAR BUCLE PRINCIPAL
-   a. Leer encoders una vez para estabilizar
-   b. Inicializar variables de control:
-        - paso = 0
-        - contador_evasion = 0 (para maniobras reactivas)
-        - ya_celebro = False (bandera de llegada)
-        - ema_anterior = 1.0
+   b. PERCEPCIÓN (Lectura de sensores):
+      - Leer valores crudos de ps0, ps7, ps1, ps2, ps5, ps6
+      - Convertir ps0 y ps7 a metros usando sensor_a_metros()
+      - Calcular distancia frontal cruda = promedio(ps0_m, ps7_m)
+      - Aplicar filtro EMA a distancia frontal: dist_ema = ALPHA_EMA * dist_cruda + (1 - ALPHA_EMA) * ema_anterior
+      - Actualizar ema_anterior = dist_ema
+      - Calcular pared_izq = max(ps5, ps6) y pared_der = max(ps1, ps2)
 
-7. BUCLE PRINCIPAL DE NAVEGACIÓN (cada 32 ms)
-   MIENTRAS (robot.step(TIME_STEP) != -1):
-        t = paso * (TIME_STEP / 1000.0)
+   c. ESTIMACIÓN DE MOVIMIENTO (Odometría - Laboratorio 1):
+      - Leer encoders actuales (act_izq, act_der)
+      - Calcular desplazamiento angular de cada rueda: delta_izq = act_izq - ant_enc_izq, delta_der = act_der - ant_enc_der
+      - Convertir a desplazamiento lineal: d_izq = RADIO_RUEDA * delta_izq, d_der = RADIO_RUEDA * delta_der
+      - Actualizar odometría (x_global, y_global, phi_global) usando modelo cinemático diferencial:
+         ds = (d_der + d_izq) / 2.0
+         dphi = (d_der - d_izq) / L
+         x_global = x_global + ds * cos(phi_global + dphi/2)
+         y_global = y_global + ds * sin(phi_global + dphi/2)
+         phi_global = atan2(sin(phi_global + dphi), cos(phi_global + dphi))
+      - Actualizar encoders anteriores
 
-        A. PERCEPCIÓN (Lectura de sensores)
-           - Leer sensores frontales ps0 y ps7
-           - Convertir valores crudos a metros usando: distancia = (0.05 * 1024) / max(valor, 1)
-           - Calcular distancia cruda promedio = (ps0_metros + ps7_metros) / 2
-           - Aplicar filtro EMA: dist_ema = alpha * dist_cruda + (1-alpha) * ema_anterior
-           - Leer sensores laterales ps1, ps2 (derecha) y ps5, ps6 (izquierda)
-           - Calcular pared_izq = max(ps5, ps6) y pared_der = max(ps1, ps2)
+   d. FILTRADO (Filtro de Kalman - Laboratorio 2):
+      - Ejecutar filtro de Kalman con:
+         Predicción: kalman_prediccion = kalman_distancia - avance (promedio de d_der y d_izq)
+         Covarianza: kalman_incertidumbre = kalman_incertidumbre + Q_PROCESO
+         Ganancia: ganancia = kalman_incertidumbre / (kalman_incertidumbre + R_MEDICION)
+         Corrección: kalman_distancia = kalman_prediccion + ganancia * (dist_ema - kalman_prediccion)
+         Covarianza actualizada: kalman_incertidumbre = (1 - ganancia) * kalman_incertidumbre
+      - Obtener distancia estimada kalman y ganancia (no usada directamente)
 
-        B. ESTIMACIÓN DE MOVIMIENTO (Odometría - Lab 1)
-           - Leer encoders: act_izq, act_der
-           - Calcular desplazamiento angular de cada rueda
-           - Convertir a lineal: d_izq = RADIO_RUEDA * (act_izq - ant_enc_izq)
-           - Actualizar posición usando modelo cinemático diferencial:
-                ds = (d_der + d_izq) / 2.0
-                dphi = (d_der - d_izq) / L
-                x_global += ds * cos(phi_global + dphi/2)
-                y_global += ds * sin(phi_global + dphi/2)
-                phi_global = atan2(sin(phi_global + dphi), cos(phi_global + dphi))
-           - Actualizar encoders anteriores
+   e. CONTROL DE MOVIMIENTO (Navegación Local y Global):
+      - Inicializar vel_izq = vel_der = 0.0, accion = "DETENIDO"
 
-        C. FILTRO DE KALMAN (Fusión sensorial - Lab 2)
-           - Calcular avance promedio = (d_izq + d_der) / 2.0
-           - Ejecutar Kalman:
-                - Predicción: kalman_prediccion = kalman_distancia - avance
-                - Actualizar incertidumbre: kalman_incertidumbre += Q_PROCESO
-                - Calcular ganancia: K = kalman_incertidumbre / (kalman_incertidumbre + R_MEDICION)
-                - Corrección: kalman_distancia = kalman_prediccion + K * (dist_ema - kalman_prediccion)
-                - Actualizar incertidumbre: kalman_incertidumbre = (1 - K) * kalman_incertidumbre
-           - Obtener distancia estimada final (kalman)
+      - Si idx_wp < len(ruta):
+            waypoint actual = ruta[idx_wp] (mx, my)
+            Calcular error de orientación:
+               ang_des = atan2(my - y_global, mx - x_global)
+               err_ang = atan2(sin(ang_des - phi_global), cos(ang_des - phi_global))
+            Calcular distancia al waypoint: dist_wp = hypot(mx - x_global, my - y_global)
 
-        D. CONTROL DE NAVEGACIÓN
-           - Inicializar velocidades vel_izq = vel_der = 0
-           - Inicializar acción = "DETENIDO"
+            - Si dist_wp < 0.07:
+                  idx_wp += 1
+                  accion = "WP_X"
+            - Si kalman <= 0.05 y contador_evasion == 0 y abs(err_ang) < 0.3:
+                  contador_evasion = 25  (iniciar maniobra de evasión)
+            - Si contador_evasion > 0:
+                  Si pared_izq > pared_der:
+                      vel_izq = 4.0, vel_der = -4.0 (girar derecha)
+                      accion = "EVADIENDO_DER"
+                  Sino:
+                      vel_izq = -4.0, vel_der = 4.0 (girar izquierda)
+                      accion = "EVADIENDO_IZQ"
+                  contador_evasion -= 1
+            - Sino si abs(err_ang) > 0.02:
+                  w = 3.0 * err_ang
+                  vel_izq = (-w * L / 2.0) / RADIO_RUEDA
+                  vel_der = ( w * L / 2.0) / RADIO_RUEDA
+                  accion = "GIRANDO"
+            - Sino:
+                  vel_izq = vel_der = VELOCIDAD_AVANCE / RADIO_RUEDA
+                  accion = "AVANZAR"
+      - Sino (se acabaron los waypoints):
+            Si no se ha celebrado:
+                Imprimir "Misión Cumplida"
+                ya_celebro = True
+            accion = "COMPLETADO"
 
-           - SI idx_wp < len(ruta) (aún hay waypoints por alcanzar):
-                - Obtener waypoint actual: (mx, my) = ruta[idx_wp]
-                - Calcular ángulo deseado: ang_des = atan2(my - y_global, mx - x_global)
-                - Calcular error angular: err_ang = atan2(sin(ang_des - phi_global), cos(ang_des - phi_global))
-                - Calcular distancia al waypoint: dist_wp = hypot(mx - x_global, my - y_global)
+   f. APLICAR VELOCIDADES A MOTORES:
+      - Limitar velocidades al rango [-MAX_VELOCIDAD, MAX_VELOCIDAD]
+      - motor_izq.setVelocity(vel_izq)
+      - motor_der.setVelocity(vel_der)
 
-                - SI dist_wp < 0.07:
-                     - Avanzar al siguiente waypoint (idx_wp++)
-                     - Acción = "WP_X"
+   g. REGISTRO DE DATOS:
+      - Guardar en CSV: paso, tiempo, x_global, y_global, ángulo en grados, accion
 
-                - SI NO, SI kalman <= 0.05 Y contador_evasion == 0 Y |err_ang| < 0.3:
-                     - Iniciar maniobra de evasión: contador_evasion = 25
+   h. IMPRESIÓN EN CONSOLA (cada ~1 segundo simulado):
+      - Mostrar pose y estado actual
 
-                - SI contador_evasion > 0:
-                     - SI pared_izq > pared_der:
-                          - Girar a la derecha: vel_izq = 4.0, vel_der = -4.0
-                          - Acción = "EVADIENDO_DER"
-                     - SI NO:
-                          - Girar a la izquierda: vel_izq = -4.0, vel_der = 4.0
-                          - Acción = "EVADIENDO_IZQ"
-                     - contador_evasion -= 1
+   i. Incrementar paso
 
-                - SI NO, SI |err_ang| > 0.02:
-                     - Calcular velocidad angular: w = 3.0 * err_ang
-                     - Convertir a velocidades de rueda:
-                          vel_izq = (-w * L / 2.0) / RADIO_RUEDA
-                          vel_der = ( w * L / 2.0) / RADIO_RUEDA
-                     - Acción = "GIRANDO"
-
-                - SI NO:
-                     - Avanzar en línea recta:
-                          vel_izq = vel_der = VELOCIDAD_AVANCE / RADIO_RUEDA
-                     - Acción = "AVANZAR"
-
-           - SI NO (ya no hay waypoints):
-                - SI ya_celebro == False:
-                     - Mostrar mensaje de "Misión Cumplida"
-                     - ya_celebro = True
-                - Acción = "COMPLETADO"
-
-        E. APLICAR VELOCIDADES A MOTORES
-           - Saturar velocidades entre -MAX_VELOCIDAD y +MAX_VELOCIDAD
-           - motor_izq.setVelocity(vel_izq)
-           - motor_der.setVelocity(vel_der)
-
-        F. REGISTRO DE DATOS
-           - Guardar en CSV: paso, tiempo, x_global, y_global, ángulo(grados), acción
-
-        G. MOSTRAR ESTADO EN CONSOLA (cada 1 segundo simulado)
-           - Imprimir pose y acción
-
-        - paso += 1
-
-8. FIN DEL BUCLE (simulación terminada)
-   - Cerrar archivo CSV
-   - Detener motores
-
-FIN
+6. FIN DEL BUCLE PRINCIPAL
+   a. Cerrar archivo CSV
+   b. Finalizar programa
 
 ## Relación con los Laboratorios 1 y 2
 - **Laboratorio 1:** Se utiliza el modelo cinemático diferencial para convertir comandos de velocidad lineal y angular en velocidades de rueda.
