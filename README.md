@@ -131,9 +131,9 @@ El escenario complejo presenta más obstáculos y pasillos estrechos, lo que obl
 5. Ejecutar la simulación presionando `Run` (Ctrl+T).
 6. Al finalizar, revisar los archivos CSV generados en la carpeta `CSV con info de cada mundo/` para analizar las trayectorias y métricas.
 
-## Video demostrativo
-- [Escenario simple](Vídeos/Proyecto%20video%20escenario%20simple.mkv)
-- [Escenario complejo](Vídeos/Proyecto%20video%20escenario%20complejo.mkv)
+## Videos demostrativos
+- [Escenario simple](./Videos/Proyecto%20video%20escenario%20simple.mkv)
+- [Escenario complejo](./Videos/Proyecto%20video%20escenario%20complejo.mkv)
 
 ## Limitaciones y trabajos futuros
 - **Error de odometría:** la acumulación de error en los encoders provoca desviaciones en trayectorias largas. Se propone usar un filtro de partículas o SLAM para corregir la posición.
