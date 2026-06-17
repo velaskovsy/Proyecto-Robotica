@@ -255,12 +255,41 @@ La trayectoria ejecutada (Figura 3) muestra un recorrido más irregular, con mú
 - [Escenario complejo](./Videos/Proyecto%20video%20escenario%20complejo.mkv)
 
 ## Conclusiones
-- El sistema logra navegar de forma autónoma en ambos escenarios, alcanzando la meta en todos los casos sin colisiones.
-- La planificación con A* proporciona rutas óptimas que el robot sigue con precisión razonable, aunque la odometría introduce errores acumulativos (7.6% en el escenario simple, 15.3% en el complejo).
-- La integración de la navegación reactiva (Laboratorio 2) como capa de seguridad es fundamental para evitar colisiones cuando el robot se desvía de la ruta planificada o encuentra obstáculos no mapeados.
-- El filtro de Kalman mejora la estabilidad de la percepción frontal, reduciendo falsas detecciones que podrían provocar giros innecesarios.
-- Se identificó como limitación principal la acumulación de error de odometría en trayectorias largas (complejo), lo que podría mitigarse con un sistema de localización más robusto (por ejemplo, SLAM o corrección con sensores externos).
-- Como mejora futura, se sugiere implementar un controlador predictivo (MPC) o usar el LiDAR para una estimación de posición más precisa.
+
+A partir de los resultados obtenidos en ambos escenarios, se pueden extraer las siguientes conclusiones:
+
+### 1. Navegación autónoma exitosa
+El robot logró completar la ruta en ambos escenarios, alcanzando la meta en 25.12 s (escenario simple) y 55.07 s (escenario complejo), sin colisiones en ningún caso. Esto valida la integración de planificación global (A*), control cinemático diferencial (Laboratorio 1), percepción sensorial y filtrado (Laboratorio 2), y seguimiento de trayectorias.
+
+### 2. Precisión del seguimiento y error de odometría
+La planificación con A* proporciona rutas óptimas, pero la odometría introduce errores acumulativos que se reflejan en la distancia recorrida:
+- **Escenario simple:** distancia recorrida 1.27 m vs planificada ~1.0 m → error del 27%.
+- **Escenario complejo:** distancia recorrida 3.17 m vs planificada ~2.8 m → error del 13%.
+
+Estos errores son típicos en sistemas de odometría pura y explican la gran cantidad de giros registrados (237 en el simple, 442 en el complejo), necesarios para corregir la orientación y mantenerse en la ruta.
+
+### 3. Efectividad de la capa reactiva (Laboratorio 2)
+La integración de la navegación reactiva del Laboratorio 2 como capa de seguridad fue fundamental: el contador de evasiones fue 0 en ambos escenarios, lo que significa que el robot nunca estuvo a menos de 5 cm de un obstáculo. Esto indica que la planificación y el seguimiento fueron lo suficientemente precisos, y que los sensores frontales y laterales, junto con el filtro de Kalman, proporcionaron una percepción confiable que permitió anticipar colisiones sin necesidad de maniobras de emergencia.
+
+### 4. Estabilidad de la percepción frontal
+El filtro de Kalman mejoró la estabilidad de la estimación de distancia frontal, reduciendo falsas detecciones que podrían provocar giros innecesarios. La señal filtrada (EMA) y la estimación de Kalman permitieron al robot tomar decisiones más estables que si se hubieran usado las lecturas crudas de los sensores.
+
+### 5. Limitaciones identificadas
+- **Error de odometría acumulativo:** especialmente notable en el escenario complejo (trayectoria más larga), donde las desviaciones laterales obligaron a un mayor número de correcciones de rumbo.
+- **Control proporcional simple:** el controlador actual solo usa un término proporcional del error angular, lo que provoca oscilaciones y giros frecuentes. Un controlador PID con término integral podría reducir el error de estado estacionario.
+
+### 6. Mejoras futuras
+- Implementar un sistema de localización más robusto (por ejemplo, filtro de partículas, SLAM o corrección con LiDAR) para mitigar el error de odometría.
+- Sustituir el control proporcional por un controlador predictivo (MPC) o un PID afinado para reducir la cantidad de giros innecesarios y suavizar la trayectoria.
+- Extender el mapa estático a un sistema de mapeo dinámico que permita navegar en entornos desconocidos o cambiantes.
+
+### 7. Relación con los laboratorios
+El proyecto integra exitosamente los conceptos de los Laboratorios 1 y 2:
+- **Lab 1:** Cinemática diferencial y odometría.
+- **Lab 2:** Sensores de distancia, filtro EMA, filtro de Kalman, navegación reactiva.
+- **Proyecto final:** Planificación global con A* y seguimiento de trayectorias.
+
+En conjunto, el sistema demuestra ser una base sólida para navegación autónoma en entornos estructurados, con un desempeño cuantificable y áreas de mejora claramente identificadas.
 
 ## Instrucciones de ejecución
 1. Clonar el repositorio desde GitHub.
