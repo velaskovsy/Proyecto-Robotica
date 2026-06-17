@@ -209,57 +209,50 @@ INICIO
 - **Laboratorio 1:** Se utiliza el modelo cinemático diferencial para convertir comandos de velocidad lineal y angular en velocidades de rueda.
 - **Laboratorio 2:** Se emplean sensores de distancia y encoders, el filtro EMA para suavizar mediciones, y el filtro de Kalman para estimar la distancia frontal. La navegación reactiva del Laboratorio 2 se integra como capa de seguridad durante el seguimiento de la ruta planificada.
 
-## Resultados
+## Resultados y métricas de desempeño
 
-### Escenario simple
+### Escenario simple (1x1 m)
+El robot completó la ruta en **25.12 segundos**, recorriendo una distancia total de **1.27 metros**. Durante el trayecto, realizó **237 correcciones de orientación** (acciones `GIRANDO`) para mantenerse en la ruta planificada. No se registraron colisiones y el robot alcanzó el estado `COMPLETADO`, confirmando que todos los waypoints fueron superados.
 
-#### Métricas de desempeño
+La trayectoria ejecutada (Figura 1) sigue de cerca la ruta generada por A*, con pequeñas oscilaciones producto de la corrección angular continua. El número de giros, aunque alto, es aceptable para un controlador proporcional simple.
 
-| Métrica | Valor |
-|---------|-------|
-| Tiempo total hasta la meta | 25.12 s |
-| Posición inicial | (-0.375, 0.375) m |
-| Posición final (meta) | (0.359, -0.3104) m |
-| Distancia directa (meta) | 1.004 m |
-| Longitud trayectoria ejecutada | ≈1.08 m |
-| Diferencia (error de trayectoria) | ≈7.6% (0.08 m extra) |
-| Número de colisiones | 0 |
-| Número de giros principales | 4 |
-| Estado final | COMPLETADO (meta alcanzada) |
+![Trayectoria - Escenario Simple](./graficos/trayectoria_escenario1.png)
+*Figura 1: Trayectoria real del robot en el escenario simple.*
 
-#### Análisis
-El robot parte de la posición inicial y avanza en línea recta, luego realiza una serie de giros suaves para ajustar su orientación y dirigirse hacia la meta. La trayectoria ejecutada sigue de cerca la ruta planificada, con pequeñas desviaciones debido a la odometría. Se registran 4 giros principales, todos necesarios para sortear los obstáculos del escenario. El robot alcanza la meta sin colisiones en 25.12 segundos.
+![Acciones - Escenario Simple](./graficos/acciones_escenario1.png)
+*Figura 2: Distribución de acciones en el tiempo (escenario simple).*
 
-### Escenario complejo
+### Escenario complejo (2x2 m)
+El robot completó la ruta en **55.07 segundos**, recorriendo **3.17 metros**. Realizó **442 giros** para navegar por pasillos estrechos y esquivar obstáculos. Al igual que en el escenario simple, no hubo colisiones y el estado final fue `COMPLETADO`.
 
-#### Métricas de desempeño
+La trayectoria ejecutada (Figura 3) muestra un recorrido más irregular, con múltiples cambios de dirección, lo cual es consistente con un entorno más desafiante. A pesar de la mayor complejidad, el sistema mantuvo la estabilidad y completó la misión exitosamente.
 
-| Métrica | Valor |
-|---------|-------|
-| Tiempo total hasta la meta | 55.07 s |
-| Posición inicial | (-0.875, 0.875) m |
-| Posición final (meta) | (0.8752, -0.8101) m |
-| Distancia directa (meta) | 2.429 m |
-| Longitud trayectoria ejecutada | ≈2.80 m |
-| Diferencia (error de trayectoria) | ≈15.3% (0.37 m extra) |
-| Número de colisiones | 0 |
-| Número de giros principales | 8 |
-| Estado final | COMPLETADO (meta alcanzada) |
+![Trayectoria - Escenario Complejo](./graficos/trayectoria_escenario2.png)
+*Figura 3: Trayectoria real del robot en el escenario complejo.*
 
-#### Análisis
-El escenario complejo presenta más obstáculos y pasillos estrechos, lo que obliga al robot a realizar múltiples correcciones de trayectoria. Se registran 8 giros principales, muchos de ellos para navegar por corredores y evitar obstáculos laterales. La odometría introduce un error acumulado mayor (15.3% de desviación), pero la capa de navegación reactiva (sensores de distancia) permite al robot mantenerse dentro del camino y evitar colisiones. El robot alcanza la meta en 55.07 segundos sin colisiones.
+![Acciones - Escenario Complejo](./graficos/acciones_escenario2.png)
+*Figura 4: Distribución de acciones en el tiempo (escenario complejo).*
 
-## Métricas de desempeño (resumen)
+### Resumen de métricas
 
-| Métrica | Escenario simple | Escenario complejo |
+| Métrica | Escenario Simple | Escenario Complejo |
 |---------|------------------|---------------------|
 | Tiempo total | 25.12 s | 55.07 s |
-| Longitud directa (meta) | 1.004 m | 2.429 m |
-| Longitud trayectoria ejecutada | 1.08 m | 2.80 m |
-| Error de trayectoria | 7.6% | 15.3% |
+| Distancia recorrida | 1.27 m | 3.17 m |
+| Número de giros | 237 | 442 |
+| Número de evasiones | 0 | 0 |
 | Colisiones | 0 | 0 |
-| Giros principales | 4 | 8 |
-| Estado | COMPLETADO | COMPLETADO |
+| Estado final | COMPLETADO | COMPLETADO |
+
+### Análisis general
+- **Eficiencia:** El robot completó ambas rutas en tiempos razonables, considerando el tamaño del mapa y la cantidad de obstáculos.
+- **Precisión:** La trayectoria ejecutada se mantiene próxima a la planificada, aunque con desviaciones menores por errores de odometría.
+- **Robustez:** La ausencia de colisiones y evasiones demuestra que la planificación con A* es confiable y que el controlador de seguimiento es estable.
+- **Oportunidades de mejora:** El alto número de giros sugiere que el controlador podría ser más suave (por ejemplo, usando un PID con ganancias mejor ajustadas) para reducir correcciones innecesarias y hacer el movimiento más natural.
+
+### Videos demostrativos
+- [Escenario simple](./Videos/Proyecto%20video%20escenario%20simple.mkv)
+- [Escenario complejo](./Videos/Proyecto%20video%20escenario%20complejo.mkv)
 
 ## Conclusiones
 - El sistema logra navegar de forma autónoma en ambos escenarios, alcanzando la meta en todos los casos sin colisiones.
@@ -277,9 +270,6 @@ El escenario complejo presenta más obstáculos y pasillos estrechos, lo que obl
 5. Ejecutar la simulación presionando `Run` (Ctrl+T).
 6. Al finalizar, revisar los archivos CSV generados en la carpeta `CSV con info de cada mundo/` para analizar las trayectorias y métricas.
 
-## Videos demostrativos
-- [Escenario simple](./Videos/Proyecto%20video%20escenario%20simple.mkv)
-- [Escenario complejo](./Videos/Proyecto%20video%20escenario%20complejo.mkv)
 
 ## Limitaciones y trabajos futuros
 - **Error de odometría:** la acumulación de error en los encoders provoca desviaciones en trayectorias largas. Se propone usar un filtro de partículas o SLAM para corregir la posición.
